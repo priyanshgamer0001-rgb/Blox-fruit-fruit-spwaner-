@@ -1,0 +1,479 @@
+-- Blox Fruits Spawner Script
+-- Spawns Blox Fruits with proper mechanics and properties
+-- PUBLIC VERSION
+
+local BloxFruitSpawner = {}
+BloxFruitSpawner.__index = BloxFruitSpawner
+
+-- Configuration
+local Config = {
+    FruitFolder = "BloxFruits",
+    SpawnHeight = 50,
+    DebugMode = true,
+    DefaultRarity = "Common",
+    FruitLifespan = 1800, -- 30 minutes in seconds
+}
+
+-- Blox Fruits Database with properties
+local BloxFruits = {
+    -- Common Fruits
+    Bomb = {
+        Rarity = "Common",
+        Color = Color3.fromRGB(0, 0, 0),
+        Size = Vector3.new(1.2, 1.2, 1.2),
+        Price = 50,
+        Icon = "🔴",
+    },
+    Spike = {
+        Rarity = "Common",
+        Color = Color3.fromRGB(139, 69, 19),
+        Size = Vector3.new(1.1, 1.1, 1.1),
+        Price = 60,
+        Icon = "⚫",
+    },
+    Chop = {
+        Rarity = "Common",
+        Color = Color3.fromRGB(255, 215, 0),
+        Size = Vector3.new(1.0, 1.0, 1.0),
+        Price = 70,
+        Icon = "🟡",
+    },
+    
+    -- Uncommon Fruits
+    Smoke = {
+        Rarity = "Uncommon",
+        Color = Color3.fromRGB(128, 128, 128),
+        Size = Vector3.new(1.1, 1.1, 1.1),
+        Price = 100,
+        Icon = "⚪",
+    },
+    Flame = {
+        Rarity = "Uncommon",
+        Color = Color3.fromRGB(255, 69, 0),
+        Size = Vector3.new(1.2, 1.2, 1.2),
+        Price = 150,
+        Icon = "🔥",
+    },
+    Fruit = {
+        Rarity = "Uncommon",
+        Color = Color3.fromRGB(255, 0, 0),
+        Size = Vector3.new(0.9, 0.9, 0.9),
+        Price = 120,
+        Icon = "🍎",
+    },
+    
+    -- Rare Fruits
+    Ice = {
+        Rarity = "Rare",
+        Color = Color3.fromRGB(0, 191, 255),
+        Size = Vector3.new(1.1, 1.1, 1.1),
+        Price = 250,
+        Icon = "❄️",
+    },
+    Sand = {
+        Rarity = "Rare",
+        Color = Color3.fromRGB(238, 214, 175),
+        Size = Vector3.new(1.1, 1.1, 1.1),
+        Price = 280,
+        Icon = "🏜️",
+    },
+    Dark = {
+        Rarity = "Rare",
+        Color = Color3.fromRGB(25, 25, 112),
+        Size = Vector3.new(1.2, 1.2, 1.2),
+        Price = 300,
+        Icon = "⬛",
+    },
+    
+    -- Epic Fruits
+    Magma = {
+        Rarity = "Epic",
+        Color = Color3.fromRGB(255, 140, 0),
+        Size = Vector3.new(1.3, 1.3, 1.3),
+        Price = 400,
+        Icon = "🌋",
+    },
+    Quake = {
+        Rarity = "Epic",
+        Color = Color3.fromRGB(184, 134, 11),
+        Size = Vector3.new(1.25, 1.25, 1.25),
+        Price = 420,
+        Icon = "💛",
+    },
+    Light = {
+        Rarity = "Epic",
+        Color = Color3.fromRGB(255, 255, 0),
+        Size = Vector3.new(1.2, 1.2, 1.2),
+        Price = 380,
+        Icon = "⚡",
+    },
+    
+    -- Legendary Fruits
+    Rubber = {
+        Rarity = "Legendary",
+        Color = Color3.fromRGB(200, 100, 0),
+        Size = Vector3.new(1.1, 1.1, 1.1),
+        Price = 500,
+        Icon = "🔴",
+    },
+    Barrier = {
+        Rarity = "Legendary",
+        Color = Color3.fromRGB(200, 200, 200),
+        Size = Vector3.new(1.15, 1.15, 1.15),
+        Price = 550,
+        Icon = "🟩",
+    },
+    String = {
+        Rarity = "Legendary",
+        Color = Color3.fromRGB(255, 192, 203),
+        Size = Vector3.new(1.1, 1.1, 1.1),
+        Price = 600,
+        Icon = "🎀",
+    },
+    
+    -- Mythical Fruits
+    Venom = {
+        Rarity = "Mythical",
+        Color = Color3.fromRGB(128, 0, 128),
+        Size = Vector3.new(1.3, 1.3, 1.3),
+        Price = 800,
+        Icon = "☠️",
+    },
+    Control = {
+        Rarity = "Mythical",
+        Color = Color3.fromRGB(255, 0, 255),
+        Size = Vector3.new(1.25, 1.25, 1.25),
+        Price = 850,
+        Icon = "🟣",
+    },
+    Human = {
+        Rarity = "Mythical",
+        Color = Color3.fromRGB(160, 82, 45),
+        Size = Vector3.new(1.2, 1.2, 1.2),
+        Price = 750,
+        Icon = "👤",
+    },
+    
+    -- Logia Fruits
+    Logia_Flame = {
+        Rarity = "Logia",
+        Color = Color3.fromRGB(255, 165, 0),
+        Size = Vector3.new(1.3, 1.3, 1.3),
+        Price = 1000,
+        Icon = "🔥",
+    },
+    Logia_Magma = {
+        Rarity = "Logia",
+        Color = Color3.fromRGB(200, 100, 0),
+        Size = Vector3.new(1.3, 1.3, 1.3),
+        Price = 1100,
+        Icon = "🌋",
+    },
+}
+
+-- Rarity colors
+local RarityColors = {
+    Common = Color3.fromRGB(100, 100, 100),
+    Uncommon = Color3.fromRGB(0, 255, 0),
+    Rare = Color3.fromRGB(0, 0, 255),
+    Epic = Color3.fromRGB(128, 0, 128),
+    Legendary = Color3.fromRGB(255, 165, 0),
+    Mythical = Color3.fromRGB(255, 0, 0),
+    Logia = Color3.fromRGB(255, 255, 0),
+}
+
+-- Initialize the spawner
+function BloxFruitSpawner.new()
+    local self = setmetatable({}, BloxFruitSpawner)
+    self.SpawnedFruits = {}
+    self.FruitCount = 0
+    self.Players = game:GetService("Players")
+    self:CreateFruitFolder()
+    return self
+end
+
+-- Create folder to store fruits
+function BloxFruitSpawner:CreateFruitFolder()
+    local workspace = game:GetService("Workspace")
+    if not workspace:FindFirstChild(Config.FruitFolder) then
+        local folder = Instance.new("Folder")
+        folder.Name = Config.FruitFolder
+        folder.Parent = workspace
+        self.FruitFolder = folder
+    else
+        self.FruitFolder = workspace:FindFirstChild(Config.FruitFolder)
+    end
+end
+
+-- Log message
+function BloxFruitSpawner:Log(message, logType)
+    logType = logType or "INFO"
+    local timestamp = os.date("%H:%M:%S")
+    local logEntry = string.format("[%s] [%s] %s", timestamp, logType, message)
+    
+    if Config.DebugMode then
+        print(logEntry)
+    end
+    
+    return logEntry
+end
+
+-- Create fruit part
+function BloxFruitSpawner:CreateFruitPart(fruitName, fruitData)
+    local part = Instance.new("Part")
+    part.Name = fruitName
+    part.Shape = Enum.PartType.Ball
+    part.Size = fruitData.Size
+    part.Color = fruitData.Color
+    part.Material = Enum.Material.Neon
+    part.CanCollide = true
+    part.CFrame = CFrame.new(0, Config.SpawnHeight, 0)
+    part.TopSurface = Enum.SurfaceType.Smooth
+    part.BottomSurface = Enum.SurfaceType.Smooth
+    
+    -- Add touch detection
+    local touchConnection
+    touchConnection = part.Touched:Connect(function(hit)
+        local humanoid = hit.Parent:FindFirstChild("Humanoid")
+        if humanoid then
+            local player = self.Players:FindFirstChild(hit.Parent.Name)
+            if player then
+                self:OnFruitCollected(fruitName, player, part)
+                touchConnection:Disconnect()
+            end
+        end
+    end)
+    
+    return part
+end
+
+-- Spawn a single fruit
+function BloxFruitSpawner:SpawnFruit(fruitName, position, lifespan)
+    fruitName = fruitName or "Fruit"
+    position = position or Vector3.new(0, Config.SpawnHeight, 0)
+    lifespan = lifespan or Config.FruitLifespan
+    
+    -- Get fruit data
+    local fruitData = BloxFruits[fruitName]
+    if not fruitData then
+        self:Log("Unknown fruit: " .. fruitName, "WARNING")
+        return nil
+    end
+    
+    -- Create fruit part
+    local fruit = self:CreateFruitPart(fruitName .. "_" .. self.FruitCount, fruitData)
+    fruit.Position = position
+    fruit.Parent = self.FruitFolder
+    
+    -- Add fruit attributes
+    local attributes = {
+        FruitName = fruitName,
+        Rarity = fruitData.Rarity,
+        Price = fruitData.Price,
+        SpawnTime = tick(),
+        Icon = fruitData.Icon,
+    }
+    
+    for attrName, attrValue in pairs(attributes) do
+        local tag = Instance.new("StringValue")
+        tag.Name = attrName
+        tag.Value = tostring(attrValue)
+        tag.Parent = fruit
+    end
+    
+    -- Store fruit reference
+    self.SpawnedFruits[fruit.Name] = {
+        Part = fruit,
+        Data = fruitData,
+        SpawnTime = tick(),
+    }
+    
+    self.FruitCount = self.FruitCount + 1
+    
+    -- Auto-remove after lifespan
+    task.delay(lifespan, function()
+        if fruit and fruit.Parent then
+            self:Log("Fruit despawned: " .. fruitName .. " (expired)", "INFO")
+            fruit:Destroy()
+            self.SpawnedFruits[fruit.Name] = nil
+        end
+    end)
+    
+    self:Log("Fruit spawned: " .. fruitName .. " at " .. tostring(position), "SUCCESS")
+    return fruit
+end
+
+-- Spawn multiple fruits
+function BloxFruitSpawner:SpawnMultipleFruits(fruitName, count, startPosition, spreadRadius)
+    startPosition = startPosition or Vector3.new(0, Config.SpawnHeight, 0)
+    spreadRadius = spreadRadius or 30
+    
+    local spawnedFruits = {}
+    
+    for i = 1, count do
+        local randomOffset = Vector3.new(
+            math.random(-spreadRadius, spreadRadius),
+            math.random(0, 10),
+            math.random(-spreadRadius, spreadRadius)
+        )
+        local position = startPosition + randomOffset
+        local fruit = self:SpawnFruit(fruitName, position)
+        table.insert(spawnedFruits, fruit)
+    end
+    
+    self:Log("Spawned " .. count .. " " .. fruitName .. " fruits", "SUCCESS")
+    return spawnedFruits
+end
+
+-- Spawn fruits by rarity
+function BloxFruitSpawner:SpawnFruitByRarity(rarity, position)
+    position = position or Vector3.new(0, Config.SpawnHeight, 0)
+    
+    local fruitsByRarity = {}
+    for fruitName, fruitData in pairs(BloxFruits) do
+        if fruitData.Rarity == rarity then
+            table.insert(fruitsByRarity, fruitName)
+        end
+    end
+    
+    if #fruitsByRarity == 0 then
+        self:Log("No fruits found with rarity: " .. rarity, "WARNING")
+        return nil
+    end
+    
+    local randomFruit = fruitsByRarity[math.random(1, #fruitsByRarity)]
+    return self:SpawnFruit(randomFruit, position)
+end
+
+-- Remove a specific fruit
+function BloxFruitSpawner:RemoveFruit(fruitName)
+    local fruitData = self.SpawnedFruits[fruitName]
+    if fruitData then
+        fruitData.Part:Destroy()
+        self.SpawnedFruits[fruitName] = nil
+        self:Log("Fruit removed: " .. fruitName, "INFO")
+        return true
+    else
+        self:Log("Fruit not found: " .. fruitName, "WARNING")
+        return false
+    end
+end
+
+-- Remove all fruits
+function BloxFruitSpawner:RemoveAllFruits()
+    for fruitName, fruitData in pairs(self.SpawnedFruits) do
+        fruitData.Part:Destroy()
+    end
+    self.SpawnedFruits = {}
+    self:Log("All fruits removed", "INFO")
+end
+
+-- Fruit collection callback
+function BloxFruitSpawner:OnFruitCollected(fruitName, player, fruitPart)
+    local fruitData = self.SpawnedFruits[fruitName]
+    if fruitData then
+        self:Log(player.Name .. " collected " .. fruitData.Data.Rarity .. " fruit: " .. fruitName, "SUCCESS")
+        fruitPart:Destroy()
+        self.SpawnedFruits[fruitName] = nil
+    end
+end
+
+-- Get all spawned fruits
+function BloxFruitSpawner:GetAllFruits()
+    local fruits = {}
+    for fruitName, fruitData in pairs(self.SpawnedFruits) do
+        table.insert(fruits, {
+            Name = fruitName,
+            Type = fruitData.Data,
+            Part = fruitData.Part,
+        })
+    end
+    return fruits
+end
+
+-- Get fruit count
+function BloxFruitSpawner:GetFruitCount()
+    return self.FruitCount
+end
+
+-- List all available fruits
+function BloxFruitSpawner:ListAllFruits()
+    local fruits = {}
+    for fruitName, fruitData in pairs(BloxFruits) do
+        table.insert(fruits, {
+            Name = fruitName,
+            Rarity = fruitData.Rarity,
+            Price = fruitData.Price,
+            Icon = fruitData.Icon,
+        })
+    end
+    return fruits
+end
+
+-- List fruits by rarity
+function BloxFruitSpawner:ListFruitsByRarity(rarity)
+    local fruits = {}
+    for fruitName, fruitData in pairs(BloxFruits) do
+        if fruitData.Rarity == rarity then
+            table.insert(fruits, fruitName)
+        end
+    end
+    return fruits
+end
+
+-- Get fruit info
+function BloxFruitSpawner:GetFruitInfo(fruitName)
+    return BloxFruits[fruitName]
+end
+
+-- Get spawned fruit count by rarity
+function BloxFruitSpawner:GetSpawnedCountByRarity(rarity)
+    local count = 0
+    for _, fruitData in pairs(self.SpawnedFruits) do
+        if fruitData.Data.Rarity == rarity then
+            count = count + 1
+        end
+    end
+    return count
+end
+
+-- Spawn fruit near player
+function BloxFruitSpawner:SpawnFruitNearPlayer(playerName, fruitName)
+    local player = self.Players:FindFirstChild(playerName)
+    if not player or not player.Character then
+        self:Log("Player not found: " .. playerName, "WARNING")
+        return nil
+    end
+    
+    local playerPos = player.Character:FindFirstChild("HumanoidRootPart").Position
+    local spawnPos = playerPos + Vector3.new(0, 5, 0)
+    
+    return self:SpawnFruit(fruitName, spawnPos)
+end
+
+-- Create random fruit spawn event
+function BloxFruitSpawner:StartRandomSpawning(interval, rarity)
+    rarity = rarity or "Rare"
+    
+    local running = true
+    
+    local function randomSpawn()
+        while running do
+            wait(interval)
+            local randomOffset = Vector3.new(
+                math.random(-100, 100),
+                Config.SpawnHeight,
+                math.random(-100, 100)
+            )
+            self:SpawnFruitByRarity(rarity, randomOffset)
+        end
+    end
+    
+    task.spawn(randomSpawn)
+    
+    return function()
+        running = false
+    end
+end
+
+return BloxFruitSpawner
